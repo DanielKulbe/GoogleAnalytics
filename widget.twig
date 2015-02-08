@@ -1,106 +1,145 @@
 <style type="text/css">
-#ga-panel1, #ga-panel2, #ga-panel3 {
+#ga-widget {
+    position: relative;
+    margin: 0 -10px -10px;
+    border: 0;
+}
+#ga-panel2, #ga-panel3 {
     display: none;
 }
 #ga-widget-buttons {
-    text-align: center;
-    margin: 8px 0;
+    margin-bottom: 20px;
+}
+#ga-widget .table {
+    margin-bottom: 0;
+}
+#ga-chart {
+    position: relative;
+    width: 100%;
+    margin-bottom: 10px;
 }
 </style>
+<div id="ga-widget" class="panel panel-default panel-analytics">
+    <div class="panel-heading">
+        <i class="fa fa-fw fa-line-chart"></i> {{ __("Google Analytics for %start% - %end%.", {'%start%':caption.start, '%end%':caption.end}) }}
+    </div>
+    <div class="panel-body">
+        <div id="ga-widget-buttons" class="btn-group center">
+            <button class="btn btn-xs active" data-id="ga-panel1">{{ __('Summary') }}</button>
+            <button class="btn btn-xs" data-id="ga-panel2">{{ __('Top pages') }}</button>
+            <button class="btn btn-xs" data-id="ga-panel3">{{ __('Top sources') }}</button>
+        </div>
 
-<h2>{{ caption }}</h2>
+        <div id="ga-panel1">
+            <div id="ga-chart"></div>
+            <table class="table table-condensed table-striped">
+                <thead>
+                    <tr><th colspan="2">{{ __('Summary') }}</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ __('Total pageviews') }}:</td>
+                        <td>{{ aggr.pageviews }} ({{ aggr.pageviewspervisit }} per visit)</td>
+                    </tr>
+                    <tr>
+                        <td>{{ __('Total visitors') }}:</td>
+                        <td>{{ aggr.visitors }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ __('Time on page') }}:</td>
+                        <td>{{ aggr.timeonpage }} min. </td>
+                    </tr>
+                    <tr>
+                        <td>{{ __('Bounce/Exitrate') }}:</td>
+                        <td>{{ aggr.bouncerate }}% / {{ aggr.exitrate }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><!-- panel1 -->
 
-<div class="btn-group center" id="ga-widget-buttons">
-    <button class="btn btn-small" data-id='ga-panel1'>Summary</button>
-    <button class="btn btn-small" data-id='ga-panel2'>Top pages</button>
-    <button class="btn btn-small" data-id='ga-panel3'>Top sources</button>
+        <div id="ga-panel2">
+            <table class="table table-striped">
+                <thead>
+                    <tr><th colspan="2">{{ __('Top pages') }}</th></tr>
+                </thead>
+                <tbody>
+                {% for page in pages %}
+                    <tr>
+                        <td align="right">{{ page.visits }}</td>
+                        <td><a href="http://{{ page.host }}" target="_blank">{{ page.host|trimtext(35) }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div><!-- panel2 -->
+
+        <div id="ga-panel3">
+            <table class="table table-striped">
+                <thead>
+                    <tr><th colspan="2">{{ __('Top sources') }}</th></tr>
+                </thead>
+                <tbody>
+                {% for page in sources %}
+                    <tr>
+                        <td align="right">{{ page.visits }}&nbsp;</td>
+                        <td>{% if page.link %}
+                            <a href="http://{{ page.host }}" target="_blank">{{ page.host|trimtext(35) }}</a></td>
+                        {% else %}
+                            {{ page.host|trimtext(35) }}
+                        {%  endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div><!-- panel3 -->
+    </div>
 </div>
 
-<div id="ga-panel1">
-<div id="chart" style="width: auto; display: inline-block;"></div>
-<table>
-    <tr>
-        <td>Total pageviews:</td>
-        <td>&nbsp; <b>{{ aggr.pageviews }} ({{ aggr.pageviewspervisit }} per visit)</b></td>
-    </tr>
-    <tr>
-        <td>Total visitors:</td>
-        <td>&nbsp; <b>{{ aggr.visitors }}</b></td>
-    </tr>
-    <tr>
-        <td>Time on page:</td>
-        <td>&nbsp; <b>{{ aggr.timeonpage }} min. </b></td>
-    </tr>
-    <tr>
-        <td>Bounce/Exitrate:</td>
-        <td>&nbsp; <b>{{ aggr.bouncerate }}% / {{ aggr.exitrate }}%</b></td>
-    </tr>
-</table>
-</div><!-- panel1 -->
-
-<div id="ga-panel2">
-    <table>
-        {% for page in pages %}
-            <tr>
-                <td valign="right">{{ page.visits }}&nbsp;</td>
-                <td><a href="http://{{ page.host }}" target="_blank">{{ page.host|trimtext(35) }}</a></td>
-            </tr>
-
-        {% endfor %}
-    </table>
-</div><!-- panel2 -->
-
-<div id="ga-panel3">
-    <table>
-        {% for page in sources %}
-            <tr>
-                <td valign="right">{{ page.visits }}&nbsp;</td>
-                <td>{% if page.link %}
-                    <a href="http://{{ page.host }}" target="_blank">{{ page.host|trimtext(35) }}</a></td>
-                {% else %}
-                    {{ page.host|trimtext(35) }}
-                {%  endif %}
-                </td>
-            </tr>
-
-        {% endfor %}
-    </table>
-</div><!-- panel3 -->
-
-<script type="text/javascript">
-    jQuery(function($) {
-
+<script>
+    (function($) {
+        // Google Chart API line chart
         var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Day');
-        data.addColumn('number', 'Pageviews');
-        data.addColumn('number', 'Visitors');
-        data.addRows([
-            {% for pageview in pageviews %}
-            ["{{ pageview.date }}", {{ pageview.pageviews }}, {{ pageview.visitors }}]{% if not loop.last %}, {%  endif %}
-            {%  endfor %}
-        ]);
-        var chart = new google.visualization.AreaChart(document.getElementById('chart'));
-        chart.draw(data, {
-            width: 300,
-            height: 180,
-            colors:['#22AADD', '#0099CC'],
-            areaOpacity: 0.1,
-            hAxis: {textPosition: 'in', showTextEvery: 3, slantedText: true, textStyle: { color: '#058dc7', fontSize: 10 } },
-            pointSize: 5,
-            chartArea:{left:40,top:5,width:"266",height:"170"}
+        data.addColumn('string', '{{ __("Day") }}');
+        data.addColumn('number', '{{ __("Pageviews") }}');
+        data.addColumn('number', '{{ __("Visitors") }}');
+        data.addRows({{ pageviews|json_encode|raw }});
+
+        var element = document.getElementById('ga-chart');
+        var chart = new google.visualization.AreaChart(element);
+
+        // Responisve charts
+        var last = 0;
+        var drawChart = function () {
+            var width = $('#ga-chart').width();
+            var height = parseInt(width*0.6);
+
+            if (width === last) return false;
+            if (height > 180) height = 180;
+
+            chart.draw(data, {
+                width: width,
+                height: height,
+                colors: ['#22AADD', '#FFAA00'],
+                areaOpacity: 0.1,
+                hAxis: {textPosition: 'in', showTextEvery: 3, slantedText: true, textStyle: { color: '#262524', fontSize: 10 } },
+                pointSize: 5,
+                chartArea:{left:40,top:5,width:(width-34).toString(),height:(height-10).toString()}
+            });
+        }
+        $(window).on('resize', drawChart);
+
+        // Initial call
+        drawChart();
+
+        // Events for the buttons
+        $(document).on('click', '#ga-widget-buttons button', function() {
+            $('#ga-widget-buttons button').removeClass('active');
+            $(this).addClass('active');
+
+            $('#ga-panel1, #ga-panel2, #ga-panel3').hide();
+            $('#'+$(this).data('id')).show();
         });
 
-    });
-
-    // Events for the buttons
-    $('#ga-widget-buttons button').on('click', function(e) {
-        $('#ga-widget-buttons button').removeClass('active');
-        $(this).addClass('active');
-
-        $('#ga-panel1, #ga-panel2, #ga-panel3').hide();
-        $('#'+$(this).data('id')).show();
-    });
-
-    $('#ga-widget-buttons button').first().trigger('click');
-
+    })(jQuery);
 </script>
