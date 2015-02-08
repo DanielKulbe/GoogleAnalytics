@@ -3,21 +3,36 @@
 webproperty: UA-12345678-1
 
 universal: false
-universal_displayfeatures: false
+univarsal_displayfeatures: false
 universal_domainname: mycoolwebsite.com
 
+
+# Admin Widget configuration
 widget: false
 widget_position: right_first
 
-ga_email: xxxxx@gmail.com
-ga_password: xxxxxxxxxxx
+# Visit https://console.developers.google.com and create a new application.
+# In the Services tab, flip the Google Analytics switch (on).
+# In the API Access tab, click Create an OAuth2.0 Client ID:
+#   - enter your name, upload a logo, and click Next
+#   - select the Service account option and press Create client ID
+#   - download your private key and put it into app/config/extensions
+# Back on the API Access page, you'll see a section called Service account
+# with a Client ID and Email address.
+#   - copy the email address
+#   - Visit https://www.google.com/analytics/web/#management/Accounts/
+#     and add this email as a user to your properties
+app_name: My awsome bolt website # optional
+app_email: 000000000000-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@developer.gserviceaccount.com
+app_cert: xxxxxxx-000000000000.p12
+
 # NOTE: the 'ga_profile_id' is _not_ the same as the 'webproperty'.
 #
 # Visit your Google Analytics page for your site, and look the displayed URL, e.g.
 #   https://www.google.com/analytics/web/?authuser=0#dashboard/default/a00000000w11111111p22222222/
 #
 # In this case the number after the 'p' is your ga_profile_id (22222222 above, yours will be different)
-ga_profile_id: 87654321
+profile_id: 22222222
 filter_referral: bolt.cm
 
 number_of_days: 14

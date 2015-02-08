@@ -23,7 +23,6 @@ class Extension extends \Bolt\BaseExtension
         if($this->config['widget']) $this->addWidget('dashboard', 'right_first', 'analyticsWidget', $additionalhtml, 3600);
     }
 
-
     public function insertAnalytics()
     {
 
@@ -75,19 +74,11 @@ EOM;
 
     }
 
-
-
-
     public function analyticsWidget()
     {
-        // http://ga-dev-tools.appspot.com/explorer/
-        // http://code.google.com/p/gapi-google-analytics-php-interface/
-        // http://www.codediesel.com/php/reading-google-analytics-data-from-php/
-        // http://code.google.com/p/gapi-google-analytics-php-interface/wiki/UsingFilterControl
+        // https://developers.google.com/analytics/devguides/reporting/core/v3/
 
-        if (empty($this->config['ga_email'])) { return "ga_email not set in config.yml."; }
-        if (empty($this->config['ga_password'])) { return "ga_password not set in config.yml."; }
-        if (empty($this->config['ga_profile_id'])) { return "ga_profile_id not set in config.yml."; }
+        if (empty($this->config['profile_id'])) { return "profile_id not set in config.yml."; }
         if (!empty($this->config['filter_referral'])) {
             $filter_referral = 'source !@ "'.$this->config['filter_referral'].'"';
         } else {
@@ -97,116 +88,118 @@ EOM;
             $this->config['number_of_days'] = 14;
         }
 
-        require_once(__DIR__.'/gapi/gapi.class.php');
+        // API dependencies
+        require_once(__DIR__.DIRECTORY_SEPARATOR.'google-api-php-client'.DIRECTORY_SEPARATOR.'autoload.php');
 
-        /* Create a new Google Analytics request and pull the results */
-        $ga = new \gapi($this->config['ga_email'], $this->config['ga_password']);
-        $ga->requestReportData(
-            $this->config['ga_profile_id'],
-            array('date'),
-            array('pageviews', 'visitors', 'uniquePageviews', 'pageviewsPerVisit', 'exitRate', 'avgTimeOnPage', 'entranceBounceRate', 'newVisits'),
-            'date',
-            '',
-            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')),
-            date('Y-m-d')
-        );
+        // create client object and set app name
+        $client = new \Google_Client();
 
-        $pageviews = array();
+        // use Oauth2 Service access
+        if (isset($this->config['app_email']) && isset($this->config['app_cert'])) {
+            $cert = $this->app['paths']['extensionsconfig'].DIRECTORY_SEPARATOR.$this->config['app_cert'];
 
-        $tempresults = $ga->getResults();
+            if (!file_exists($cert)) {
+                return "OAuth2 app_cert file not found or set, please adjust your config.yml.";
+            } elseif (empty($this->config['app_email'])) {
+                return "OAuth2 app_mail not set, please adjust your config.yml.";
+            }
 
-        $aggr = array(
-            'pageviews' => 0,
-            'pageviewspervisit' => 0,
-            'visitors' => 0,
-            'uniquePageviews' => 0,
-            'timeonpage' => 0,
-            'bouncerate' => 0,
-            'exitrate' => 0
-        );
-
-        // aggregate data:
-        foreach($tempresults as $result) {
-
-            $pageviews[] = array(
-                'date' => date('M j',strtotime($result->getDate())),
-                'pageviews' => $result->getPageviews(),
-                'visitors' => $result->getVisitors()
-            );
-
-            $aggr['pageviews'] += $result->getPageviews();
-            $aggr['pageviewspervisit'] += $result->getPageviewsPerVisit();
-            $aggr['visitors'] += $result->getVisitors();
-            $aggr['uniquePageviews'] += $result->getUniquepageviews();
-            $aggr['timeonpage'] += $result->getAvgtimeonpage();
-            $aggr['bouncerate'] += $result->getEntrancebouncerate();
-            $aggr['exitrate'] += $result->getExitrate();
+            $client->setAssertionCredentials( new \Google_Auth_AssertionCredentials(
+                $this->config['app_email'],
+                array(\Google_Service_Analytics::ANALYTICS_READONLY),
+                file_get_contents($cert)
+            ) );
+        }
+        else {
+            return "OAuth2 is not properly set up, please adjust your config.yml.";
         }
 
-        $aggr['pageviewspervisit'] = round($aggr['pageviewspervisit'] / count($tempresults), 1);
-        $aggr['timeonpage'] = $this->secondMinute(round($aggr['timeonpage'] / count($tempresults), 1));
-        $aggr['bouncerate'] = round($aggr['bouncerate'] / count($tempresults), 1);
-        $aggr['exitrate'] = round($aggr['exitrate'] / count($tempresults), 1);
-
-        // Get the 'populair sources'
-        $ga->requestReportData(
-            $this->config['ga_profile_id'],
-            array('source','referralPath'),
-            array('visits'),
-            '-visits',
-            $filter_referral,
-            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')),
-            date('Y-m-d'),
-            1,
-            12
+        $caption = array(
+            'start' => date('M d', strtotime('-' . $this->config['number_of_days'] .' day')),
+            'end' => date('M d')
         );
-        $results = $ga->getResults();
 
-        $sources = array();
+        // name of your app
+        $client->setApplicationName(empty($this->config['app_name']) ? 'bolt Google Analytics widget' : $this->config['app_name']);
 
-        foreach($results as $result) {
-            if ($result->getReferralPath() == "(not set)") {
+        // create service and get data
+        $service = new \Google_Service_Analytics($client);
+        $pageviews = $sources = $pages = array();
+
+        // Get the 'pageviews per date'
+        $request = $service->data_ga->get(
+            'ga:'.$this->config['profile_id'],
+            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')), date('Y-m-d'),
+            'ga:pageviews,ga:visitors,ga:uniquePageviews,ga:pageviewsPerSession,ga:exitRate,ga:avgTimeOnPage,ga:bounceRate',
+            array(
+                'dimensions' => 'ga:date',
+                'sort' => 'ga:date',
+            )
+        );
+
+        foreach ($request->getRows() as $result) {
+            $pageviews[] = array( date('M j', strtotime($result[0])), (int)$result[1], (int)$result[2] );
+        }
+
+        // aggregate data:
+        $aggr = array(
+            'pageviews' => (int)$request->totalsForAllResults['ga:pageviews'],
+            'visitors' => (int)$request->totalsForAllResults['ga:visitors'],
+            'uniquePageviews' => (int)$request->totalsForAllResults['ga:uniquePageviews'],
+            'pageviewspervisit' => round((float)$request->totalsForAllResults['ga:pageviewsPerSession'], 1),
+            'exitrate' => round((float)$request->totalsForAllResults['ga:exitRate'], 1),
+            'timeonpage' => $this->secondMinute(round((float)$request->totalsForAllResults['ga:avgTimeOnPage'], 1)),
+            'bouncerate' => round((float)$request->totalsForAllResults['ga:bounceRate'], 1),
+        );
+
+        // Get the 'popular sources'
+        $request = $service->data_ga->get(
+            'ga:'.$this->config['profile_id'],
+            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')), date('Y-m-d'),
+            'ga:sessions',
+            array(
+                'dimensions' => 'ga:source,ga:referralPath',
+                'sort' => '-ga:sessions',
+                'filters' => 'ga:source!='.$filter_referral.',ga:referralPath!='.$filter_referral,
+                'max-results' => '12'
+            )
+        );
+
+        foreach($request->getRows() as $result) {
+            if ($result[1] == "(not set)") {
                 $sources[] = array(
                     'link' => false,
-                    'host' => $result->getSource(),
-                    'visits' => $result->getVisits()
+                    'host' => $result[0],
+                    'visits' => $result[2]
                 );
             } else {
                 $sources[] = array(
                   'link' => true,
-                  'host' => $result->getSource() . $result->getReferralPath(),
-                  'visits' => $result->getVisits()
+                  'host' => $result[0] . $result[1],
+                  'visits' => $result[2]
                 );
             }
         }
 
         // Get the 'popular pages'
-        $ga->requestReportData(
-            $this->config['ga_profile_id'],
-            array('hostname','pagePath'),
-            array('visits'),
-            '-visits',
-            '',
-            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')),
-            date('Y-m-d'),
-            1,
-            12
+        $request = $service->data_ga->get(
+            'ga:'.$this->config['profile_id'],
+            date('Y-m-d', strtotime('-' . $this->config['number_of_days'] .' day')), date('Y-m-d'),
+            'ga:sessions',
+            array(
+                'dimensions' => 'ga:hostname,ga:referralPath',
+                'sort' => '-ga:sessions',
+                'filters' => 'ga:source!='.$filter_referral.',ga:referralPath!='.$filter_referral,
+                'max-results' => '12'
+            )
         );
-        $results = $ga->getResults();
 
-        $pages = array();
-
-        foreach($results as $result) {
+        foreach($request->getRows() as $result) {
             $pages[] = array(
-                'host' => $result->gethostname() . $result->getPagePath(),
-                'visits' => $result->getVisits()
+                'host' => $result[0] . ($result[1] != '(not set)' ? $result[1] : ''),
+                'visits' => $result[2]
             );
         }
-
-        $caption = sprintf("Google Analytics for %s - %s.",
-            date('M d', strtotime('-' . $this->config['number_of_days'] .' day')),
-            date('M d')
-        );
 
         $this->app['twig.loader.filesystem']->addPath(__DIR__, 'GoogleAnalytics');
         $html = $this->app['render']->render("@GoogleAnalytics/widget.twig", array(
@@ -220,7 +213,6 @@ EOM;
         return new \Twig_Markup($html, 'UTF-8');
 
     }
-
 
     private function secondMinute($seconds) {
         return sprintf('%d:%02d', floor($seconds/60), $seconds % 60);
