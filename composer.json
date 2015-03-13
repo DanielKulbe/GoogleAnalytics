@@ -11,6 +11,10 @@
         {
             "name": "Bob den Otter",
             "email": "bob@twokings.nl"
+        },
+        {
+            "name": "Daniel Kulbe",
+            "email": "info@daniel-kulbe.de"
         }
     ],
     "autoload": {
