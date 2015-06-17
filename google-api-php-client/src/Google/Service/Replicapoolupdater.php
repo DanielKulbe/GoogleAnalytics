@@ -944,17 +944,21 @@ class Google_Service_Replicapoolupdater_OperationWarningsData extends Google_Mod
   }
 }
 
-class Google_Service_Replicapoolupdater_RollingUpdate extends Google_Model
+class Google_Service_Replicapoolupdater_RollingUpdate extends Google_Collection
 {
+  protected $collection_key = 'instances';
   protected $internal_gapi_mappings = array(
   );
   public $actionType;
   public $creationTimestamp;
   public $description;
+  protected $errorType = 'Google_Service_Replicapoolupdater_RollingUpdateError';
+  protected $errorDataType = '';
   public $id;
   public $instanceGroup;
   public $instanceGroupManager;
   public $instanceTemplate;
+  public $instances;
   public $kind;
   protected $policyType = 'Google_Service_Replicapoolupdater_RollingUpdatePolicy';
   protected $policyDataType = '';
@@ -989,6 +993,14 @@ class Google_Service_Replicapoolupdater_RollingUpdate extends Google_Model
   {
     return $this->description;
   }
+  public function setError(Google_Service_Replicapoolupdater_RollingUpdateError $error)
+  {
+    $this->error = $error;
+  }
+  public function getError()
+  {
+    return $this->error;
+  }
   public function setId($id)
   {
     $this->id = $id;
@@ -1020,6 +1032,14 @@ class Google_Service_Replicapoolupdater_RollingUpdate extends Google_Model
   public function getInstanceTemplate()
   {
     return $this->instanceTemplate;
+  }
+  public function setInstances($instances)
+  {
+    $this->instances = $instances;
+  }
+  public function getInstances()
+  {
+    return $this->instances;
   }
   public function setKind($kind)
   {
@@ -1079,6 +1099,60 @@ class Google_Service_Replicapoolupdater_RollingUpdate extends Google_Model
   }
 }
 
+class Google_Service_Replicapoolupdater_RollingUpdateError extends Google_Collection
+{
+  protected $collection_key = 'errors';
+  protected $internal_gapi_mappings = array(
+  );
+  protected $errorsType = 'Google_Service_Replicapoolupdater_RollingUpdateErrorErrors';
+  protected $errorsDataType = 'array';
+
+
+  public function setErrors($errors)
+  {
+    $this->errors = $errors;
+  }
+  public function getErrors()
+  {
+    return $this->errors;
+  }
+}
+
+class Google_Service_Replicapoolupdater_RollingUpdateErrorErrors extends Google_Model
+{
+  protected $internal_gapi_mappings = array(
+  );
+  public $code;
+  public $location;
+  public $message;
+
+
+  public function setCode($code)
+  {
+    $this->code = $code;
+  }
+  public function getCode()
+  {
+    return $this->code;
+  }
+  public function setLocation($location)
+  {
+    $this->location = $location;
+  }
+  public function getLocation()
+  {
+    return $this->location;
+  }
+  public function setMessage($message)
+  {
+    $this->message = $message;
+  }
+  public function getMessage()
+  {
+    return $this->message;
+  }
+}
+
 class Google_Service_Replicapoolupdater_RollingUpdateList extends Google_Collection
 {
   protected $collection_key = 'items';
@@ -1129,19 +1203,29 @@ class Google_Service_Replicapoolupdater_RollingUpdatePolicy extends Google_Model
 {
   protected $internal_gapi_mappings = array(
   );
-  protected $canaryType = 'Google_Service_Replicapoolupdater_RollingUpdatePolicyCanary';
-  protected $canaryDataType = '';
+  public $autoPauseAfterInstances;
+  public $instanceStartupTimeoutSec;
   public $maxNumConcurrentInstances;
+  public $maxNumFailedInstances;
+  public $minInstanceUpdateTimeSec;
   public $sleepAfterInstanceRestartSec;
 
 
-  public function setCanary(Google_Service_Replicapoolupdater_RollingUpdatePolicyCanary $canary)
+  public function setAutoPauseAfterInstances($autoPauseAfterInstances)
   {
-    $this->canary = $canary;
+    $this->autoPauseAfterInstances = $autoPauseAfterInstances;
   }
-  public function getCanary()
+  public function getAutoPauseAfterInstances()
   {
-    return $this->canary;
+    return $this->autoPauseAfterInstances;
+  }
+  public function setInstanceStartupTimeoutSec($instanceStartupTimeoutSec)
+  {
+    $this->instanceStartupTimeoutSec = $instanceStartupTimeoutSec;
+  }
+  public function getInstanceStartupTimeoutSec()
+  {
+    return $this->instanceStartupTimeoutSec;
   }
   public function setMaxNumConcurrentInstances($maxNumConcurrentInstances)
   {
@@ -1151,6 +1235,22 @@ class Google_Service_Replicapoolupdater_RollingUpdatePolicy extends Google_Model
   {
     return $this->maxNumConcurrentInstances;
   }
+  public function setMaxNumFailedInstances($maxNumFailedInstances)
+  {
+    $this->maxNumFailedInstances = $maxNumFailedInstances;
+  }
+  public function getMaxNumFailedInstances()
+  {
+    return $this->maxNumFailedInstances;
+  }
+  public function setMinInstanceUpdateTimeSec($minInstanceUpdateTimeSec)
+  {
+    $this->minInstanceUpdateTimeSec = $minInstanceUpdateTimeSec;
+  }
+  public function getMinInstanceUpdateTimeSec()
+  {
+    return $this->minInstanceUpdateTimeSec;
+  }
   public function setSleepAfterInstanceRestartSec($sleepAfterInstanceRestartSec)
   {
     $this->sleepAfterInstanceRestartSec = $sleepAfterInstanceRestartSec;
@@ -1158,22 +1258,5 @@ class Google_Service_Replicapoolupdater_RollingUpdatePolicy extends Google_Model
   public function getSleepAfterInstanceRestartSec()
   {
     return $this->sleepAfterInstanceRestartSec;
-  }
-}
-
-class Google_Service_Replicapoolupdater_RollingUpdatePolicyCanary extends Google_Model
-{
-  protected $internal_gapi_mappings = array(
-  );
-  public $numInstances;
-
-
-  public function setNumInstances($numInstances)
-  {
-    $this->numInstances = $numInstances;
-  }
-  public function getNumInstances()
-  {
-    return $this->numInstances;
   }
 }
