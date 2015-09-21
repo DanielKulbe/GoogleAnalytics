@@ -1,7 +1,7 @@
 <?php
 // Google Analytics extension for Bolt
 
-namespace Bolt\Extension\Bolt\GoogleAnalytics;
+namespace Bolt\Extension\DanielKulbe\GoogleAnalytics;
 
 use Bolt\Extensions\Snippets\Location as SnippetLocation;
 
@@ -71,7 +71,6 @@ EOM;
         $html = str_replace("%domainname%", ( $this->config['universal'] ? $this->config['universal_domainname'] : $_SERVER['HTTP_HOST'] ), $html);
 
         return new \Twig_Markup($html, 'UTF-8');
-
     }
 
     public function analyticsWidget()
