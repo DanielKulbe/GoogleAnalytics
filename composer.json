@@ -1,11 +1,8 @@
 {
     "name": "danielkulbe/googleanalytics",
-    "description": "",
+    "description": "Analyse your Bolt site with Google Analytics.",
     "type": "bolt-extension",
     "keywords": ["google", "analytics", "widget"],
-    "require": {
-        "bolt/bolt": ">=2.2.0,<3.0.0"
-    },
     "license": "MIT",
     "authors": [
         {
@@ -17,12 +14,28 @@
             "email": "info@daniel-kulbe.de"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "http://gitlab.daniel-kulbe.de/root/bolt-google-analytics.git"
+        }
+    ],
+    "require": {
+        "bolt/bolt": ">=2.2.0,<3.0.0",
+        "php": ">=5.3"
+    },
     "autoload": {
         "files": [
             "init.php"
         ],
         "psr-4": {
             "Bolt\\Extension\\Bolt\\GoogleAnalytics\\": ""
+        }
+    },
+    "extra": {
+        "bolt-icon": "logo-google_analytics.png",
+        "branch-alias" : {
+            "dev-master" : "1.0.x-dev"
         }
     }
 }
