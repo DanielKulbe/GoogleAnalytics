@@ -17,7 +17,11 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "http://gitlab.daniel-kulbe.de/root/bolt-google-analytics.git"
+            "url": "git@bitbucket.org:danielkulbe/bolt-googleanalytics.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:DanielKulbe/GoogleAnalytics.git"
         }
     ],
     "require": {
